@@ -30,7 +30,7 @@ variable "iam_instance_profile" {
 
 variable "key_name" {
   description = "The name of the key pair to use for the instances."
-  default     = "your-key-pair"
+  default     = ""
 }
 
 variable "image_id" {
