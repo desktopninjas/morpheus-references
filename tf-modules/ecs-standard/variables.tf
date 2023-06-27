@@ -34,8 +34,8 @@ variable "key_name" {
 }
 
 variable "image_id" {
-  description = "The ID of the AMI to use for the instances."
-  default     = "ami-0c94855ba95c574c8"  # replace with your AMI ID
+  description = "The ID of the AMI to use for the instances.  If empty, Terraform will fetch the latest ami from AWS."
+  default     = "" 
 }
 
 variable "cis_hardening_script" {

@@ -4,13 +4,29 @@ resource "aws_ecs_cluster" "cluster" {
   tags = var.tags
 }
 
-resource "aws_launch_configuration" "lc" {
-  name          = "${var.cluster_name}-lc"
-  image_id      = var.image_id
+data "aws_ami" "ecs" {
+  most_recent = true
+
+  filter {
+    name   = "name"
+    values = ["amzn2-ami-ecs-hvm-*-x86_64-ebs"]
+  }
+
+  filter {
+    name   = "owner-alias"
+    values = ["amazon"]
+  }
+}
+
+resource "aws_launch_template" "lt" {
+  name          = "${var.cluster_name}-lt"
+  image_id      = var.image_id != "" ? var.image_id : data.aws_ami.ecs.id
   instance_type = var.instance_type
   key_name      = var.key_name
 
-  iam_instance_profile = "ecsInstanceRole"  # Assuming this IAM role exists in your AWS account
+  iam_instance_profile {
+    name = "ecsInstanceRole" # Assuming this IAM role exists in your AWS account
+  }
 
   user_data = base64encode(
     data.template_file.user_data.rendered
@@ -20,12 +36,16 @@ resource "aws_launch_configuration" "lc" {
 }
 
 resource "aws_autoscaling_group" "asg" {
-  launch_configuration = aws_launch_configuration.lc.id
   min_size             = var.min_size
   max_size             = var.max_size
   desired_capacity     = var.desired_capacity
 
   vpc_zone_identifier = ["subnet-abcde012", "subnet-bcde012a"]  # replace with your subnet IDs
+
+  launch_template {
+    id      = aws_launch_template.lt.id
+    version = "$Latest"
+  }
 
   tag {
     key                 = "Name"
@@ -33,7 +53,6 @@ resource "aws_autoscaling_group" "asg" {
     propagate_at_launch = true
   }
 
-  tags = var.tags
 }
 
 data "template_file" "user_data" {
