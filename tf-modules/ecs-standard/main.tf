@@ -25,7 +25,7 @@ resource "aws_launch_template" "lt" {
   key_name      = var.key_name
 
   iam_instance_profile {
-    name = "ecsInstanceRole" # Assuming this IAM role exists in your AWS account
+    name = var.iam_instance_profile # Assuming this IAM role exists in your AWS account
   }
 
   user_data = base64encode(

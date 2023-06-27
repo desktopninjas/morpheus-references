@@ -25,7 +25,7 @@ variable "desired_capacity" {
 
 variable "iam_instance_profile" {
   description = "Instance role to apply to instances in the ECS cluster"
-  default     = 1
+  default     = ""
 }
 
 variable "key_name" {
