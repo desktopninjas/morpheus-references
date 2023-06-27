@@ -48,3 +48,9 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+
+variable "subnet_ids" {
+  description = "a list of subnet IDs to use"
+  type        = list(string)
+  default     = []
+}
