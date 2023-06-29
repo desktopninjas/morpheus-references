@@ -1,5 +1,5 @@
 resource "aws_iam_role" "eks_role" {
-  name = var.iam_role_name
+  name = local.iam_role_name
 
   assume_role_policy = <<EOF
 {
@@ -28,7 +28,7 @@ resource "aws_iam_role_policy_attachment" "eks_service_policy" {
 }
 
 resource "aws_eks_cluster" "eks_cluster" {
-  name     = var.cluster_name
+  name     = local.cluster_name
   role_arn = aws_iam_role.eks_role.arn
 
   vpc_config {
@@ -43,7 +43,7 @@ resource "aws_eks_cluster" "eks_cluster" {
 
 resource "aws_eks_node_group" "eks_node_group" {
   cluster_name    = aws_eks_cluster.eks_cluster.name
-  node_group_name = var.node_group_name
+  node_group_name = local.node_group_name
   node_role_arn   = aws_iam_role.eks_role.arn
   subnet_ids      = [var.subnet_id]
 
