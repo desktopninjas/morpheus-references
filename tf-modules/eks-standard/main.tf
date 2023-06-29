@@ -2,6 +2,13 @@
 resource "aws_iam_role" "eks_role" {
   name = local.iam_role_name
 
+  managed_policy_arns = [ 
+    "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy",
+    "arn:aws:iam::aws:policy/AmazonEKSServicePolicy",
+    "arn:aws-us-gov:iam::aws:policy/AmazonEKSWorkerNodePolicy",
+    "arn:aws-us-gov:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
+    ]
+
   assume_role_policy = <<EOF
 {
   "Version": "2012-10-17",
@@ -12,22 +19,17 @@ resource "aws_iam_role" "eks_role" {
         "Service": "eks.amazonaws.com"
       },
       "Action": "sts:AssumeRole"
+    },
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "Service": "ec2.amazonaws.com"
+      },
+      "Action": "sts:AssumeRole"
     }
   ]
 }
 EOF
-}
-
-// Attach the EKS Cluster Policy to the IAM role
-resource "aws_iam_role_policy_attachment" "eks_cluster_policy" {
-  role       = aws_iam_role.eks_role.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"
-}
-
-// Attach the EKS Service Policy to the IAM role
-resource "aws_iam_role_policy_attachment" "eks_service_policy" {
-  role       = aws_iam_role.eks_role.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSServicePolicy"
 }
 
 // Define the EKS cluster
@@ -36,12 +38,14 @@ resource "aws_eks_cluster" "eks_cluster" {
   role_arn = aws_iam_role.eks_role.arn
 
   vpc_config {
-    subnet_ids = [var.subnet_id]
+    subnet_ids = var.subnet_ids
+    endpoint_private_access = true
   }
 
   depends_on = [
-    aws_iam_role_policy_attachment.eks_cluster_policy,
-    aws_iam_role_policy_attachment.eks_service_policy,
+    aws_iam_role.eks_role
+    # aws_iam_role_policy_attachment.eks_cluster_policy,
+    # aws_iam_role_policy_attachment.eks_service_policy,
   ]
 }
 
@@ -50,7 +54,7 @@ resource "aws_eks_node_group" "eks_node_group" {
   cluster_name    = aws_eks_cluster.eks_cluster.name
   node_group_name = local.node_group_name
   node_role_arn   = aws_iam_role.eks_role.arn
-  subnet_ids      = [var.subnet_id]
+  subnet_ids      = var.subnet_ids
 
   // Define the scaling configuration for the node group
   scaling_config {
